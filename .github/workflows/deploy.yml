@@ -13,7 +13,7 @@ concurrency:
   group: pages
   cancel-in-progress: true
 
-jobs:
+deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -61,13 +61,6 @@ jobs:
         with:
           path: out
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
       - name: Deploy
         uses: actions/deploy-pages@v4
         id: deployment
