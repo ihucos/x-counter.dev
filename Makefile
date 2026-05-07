@@ -6,6 +6,7 @@
 
 out/blog: templates/blog/* $(shell find content/posts)
 	mkdir -p out/blog
+	mkdir -p .pelican/content
 	cd .pelican && pelican content
 	touch out/blog # mark as done
 
