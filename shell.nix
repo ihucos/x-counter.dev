@@ -24,6 +24,8 @@ let
     pelican
     yasha
     pyyaml
+    pytoml
+    xmltodict
   ]);
 in
 pkgs.mkShell {
