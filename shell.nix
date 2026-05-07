@@ -24,7 +24,6 @@ let
     pelican
     yasha
     pyyaml
-    pytoml
     xmltodict
   ]);
 in
