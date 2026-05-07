@@ -1,8 +1,22 @@
+The main reason your workflow is failing is a syntax error: the deploy: block is missing the jobs: header. In GitHub Actions, all individual jobs must be nested under the jobs: key. Additionally, there are a few outdated actions and structural tweaks that will make this run much smoother.
+
+Key Fixes
+Add jobs:: This is the container for your deploy job.
+
+Fix Indentation: Your steps were slightly misaligned relative to the job definition.
+
+Update Actions: actions/checkout@v2 and setup-python@v2 are quite old. Updating to @v4 is faster and more secure.
+
+Simplify Dependencies: You don't need to manually install python3-pip on ubuntu-latest; it's already there.
+
+Corrected YAML
+YAML
 name: Deploy to GitHub Pages
 
 on:
   push:
     branches: [main]
+  workflow_dispatch: # Allows you to run it manually for testing
 
 permissions:
   contents: read
@@ -10,56 +24,48 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: "pages"
   cancel-in-progress: true
 
-deploy:
+jobs: # <--- This was missing
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-
     steps:
       - name: Set up WARP
         uses: fscarmen/warp-on-actions@v1.1
 
-      - env:
-          SSH_PRIVATE_KEY: "${{secrets.SSH_PRIVATE_KEY}}"
-        name: "Create SSH key"
+      - name: "Checkout"
+        uses: actions/checkout@v4 # Updated version
+
+      - name: "Create SSH key"
+        env:
+          SSH_PRIVATE_KEY: "${{ secrets.SSH_PRIVATE_KEY }}"
         run: |
           mkdir -p ~/.ssh/
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/private.key
-          chmod 600 ~/.ssh/private.key
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
         shell: bash
 
-      - name: "Checkout"
-        uses: actions/checkout@v2
+      - name: "Set up Python"
+        uses: actions/setup-python@v5 # Updated version
+        with:
+          python-version: '3.10'
 
-      - name: "Use python"
-        uses: actions/setup-python@v2
+      - name: "Install Dependencies"
+        run: |
+          sudo apt-get update && sudo apt-get install -y markdown
+          pip install tzdata pytz pelican Markdown jinja_markdown yasha
 
-      - name: "Install markdown"
-        run: sudo apt-get update && sudo apt-get install -y markdown
-
-      - name: "Install stuff"
-        run: sudo apt-get -y install python3-pip
-
-      - name: "Install timezones stuff?"
-        run: pip3 install tzdata pytz
-
-      - name: "Install pelican"
-        run: pip3 install pelican Markdown
-
-      - name: "Install jinja markdown tag"
-        run: pip3 install jinja_markdown
-
-      - name: "Install yasha"
-        run: pip3 install yasha
-
-      - name: "make all"
+      - name: "Build Site"
         run: make all
 
       - name: Upload Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: out
+          path: out # Ensure your 'make' command actually outputs to a folder named 'out'
 
       - name: Deploy
         uses: actions/deploy-pages@v4
