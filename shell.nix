@@ -9,6 +9,10 @@ let
       inherit pname version;
       sha256 = "sha256-+FFt7XwB5ExHKIZP/mtVFXNJaTj1gv1SHqIf2C2woGA=";
     };
+    nativeBuildInputs = with python3.pkgs; [
+      setuptools
+      wheel
+    ];
     propagatedBuildInputs = with pkgs.python3Packages; [
       jinja2
       pyyaml
